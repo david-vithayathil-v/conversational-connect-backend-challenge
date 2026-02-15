@@ -139,11 +139,18 @@ celerybeat.pid
 .env
 .envrc
 .venv
-env/
 venv/
-ENV/
 env.bak/
 venv.bak/
+
+# Ignore env files by default, but keep the repo-safe tracked ones
+env/*.env
+!env/dev.env
+!env/staging.env
+!env/production.env
+
+# Backward-compat: older naming might still exist locally
+env/.env*
 
 # Spyder project settings
 .spyderproject

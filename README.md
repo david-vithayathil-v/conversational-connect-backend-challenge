@@ -1,43 +1,123 @@
-# Conversational Connect — Backend Challenge (Template)
+# Conversational Connect — FastAPI Scaffold
 
-This repository is intentionally minimal on the `main` branch.
+This branch (`fastapi`) provides a small, production-leaning **FastAPI** scaffold used in interviews.
 
-It is used during interviews to evaluate a candidate’s ability to design and implement a **production-ready Python API** (architecture, correctness, reliability, and engineering hygiene).
+The goal is to give you a clean starting point (app structure, configuration, logging, health endpoints, and a tiny test) so you can focus on implementing the API logic during the interview.
 
-## Start Here
+## Quickstart
 
-The actual starter code lives in framework-specific branches. Check out **one** of the following:
-
-- `fastapi` — FastAPI implementation scaffold
-- `flask` — Flask implementation scaffold
-- `django` — Django implementation scaffold
-
-### Checkout a branch
+### 1) Create a virtual environment
 
 ```bash
-git fetch
-
-# Choose ONE:
-git checkout fastapi
-# or
-git checkout flask
-# or
-git checkout django
+python -m venv .venv
+source .venv/bin/activate
 ```
 
-## What You’re Expected To Do (in the framework branch)
+### 2) Install dependencies
 
-You will implement the API behavior and production readiness concerns within the chosen framework branch. Typical expectations include:
+```bash
+pip install -r requirements.txt
+pip install -r requirements-dev.txt
+```
 
-- Clear API design (routes, request/response schemas, status codes)
-- Input validation and useful error responses
-- Configuration via environment variables (no secrets committed)
-- Observability basics (structured logging; health/readiness endpoints if relevant)
-- Reasonable project structure and maintainable code
+### 3) Configure environment
 
-The branch you choose will contain the detailed prompt and any starter scaffolding.
+Env files are provided in `env/` (safe defaults, no secrets):
 
-## Notes
+- `env/dev.env`
+- `env/staging.env`
+- `env/production.env`
 
-- The `main` branch is a template landing page only.
-- If you’re an interviewer using this repo as a template, direct candidates to check out the framework branch you want them to use.
+### 4) Run the API
+
+```bash
+uvicorn app.main:app --reload
+```
+
+Open:
+
+- Swagger UI: `http://127.0.0.1:8000/docs`
+- OpenAPI spec: `http://127.0.0.1:8000/openapi.json`
+
+## Endpoints (provided)
+
+- `GET /api/v1/health` — API health check
+- `GET /api/v1/settings` — returns selected settings (from env-backed `Settings`)
+
+Responses include an `X-Request-ID` header (generated if not provided).
+
+## Project Structure
+
+```text
+app/
+	main.py                # FastAPI app wiring + exception handling
+	api/v1/                # Versioned routes
+		endpoints/            # Route handlers
+		services/             # Business logic/services
+	core/
+		config.py            # Pydantic settings (APP_* env vars)
+		logging.py           # JSON/text logging configuration
+		middleware.py        # Request ID + timing middleware
+tests/
+	test_health.py         # smoke tests for health endpoints
+```
+
+## Configuration
+
+Settings are loaded from environment variables prefixed with `APP_`.
+
+This scaffold prefers env files in the `env/` folder. By default, settings are loaded from the first existing file in this order:
+
+1. `env/<environment>.env` (when `APP_ENVIRONMENT` is set)
+2. `env/dev.env`
+3. `env/.env` (legacy fallback)
+4. `.env` (legacy fallback)
+
+### Staging / Production
+
+To load an environment-specific file, you must set `APP_ENVIRONMENT` in the **process environment** (recommended for deployments):
+
+```bash
+export APP_ENVIRONMENT=staging
+uvicorn app.main:app --reload
+```
+
+When `APP_ENVIRONMENT` is set, the app will also try (if present):
+
+- `env/<environment>.env` (e.g. `env/staging.env`)
+
+You can also explicitly point to a file using `APP_ENV_FILE`:
+
+```bash
+export APP_ENV_FILE=env/production.env
+uvicorn app.main:app
+```
+
+For local runs, `APP_ENV_FILE` is usually the simplest because it doesn’t require pre-setting `APP_ENVIRONMENT`.
+
+Common options:
+
+- `APP_ENVIRONMENT` (default: `local`)
+- `APP_LOG_LEVEL` (default: `INFO`)
+- `APP_LOG_FORMAT` (default: `json`) — `json` or `text`
+- `APP_API_V1_PREFIX` (default: `/api/v1`)
+
+## Testing and Tooling
+
+```bash
+pytest
+ruff check .
+mypy app
+```
+
+## Docker
+
+```bash
+docker build -t conversational-connect-fastapi .
+docker run --rm -p 8000:8000 conversational-connect-fastapi
+```
+
+## What You Implement During the Interview
+
+The interview prompt will typically ask you to add one or more API endpoints and supporting logic.
+When implementing, treat this like a production service: validate inputs, return useful errors, keep code organized, and make sensible trade-offs.
