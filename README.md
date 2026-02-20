@@ -1,6 +1,6 @@
-# Conversational Connect — Flask Scaffold
+# Conversational Connect — Django Scaffold
 
-This branch (`flask`) provides a small, production-leaning **Flask** scaffold.
+This branch (`django`) provides a small, production-leaning **Django** scaffold.
 
 The goal is to give you a clean starting point (app structure, configuration, logging, health endpoints, and a tiny test) so you can focus on implementing the API logic during the interview.
 
@@ -31,7 +31,13 @@ Env files are provided in `env/` (safe defaults, no secrets):
 - `env/staging.env`
 - `env/production.env`
 
-### 4) Run the API
+### 4) Run migrations
+
+```bash
+make migrate
+```
+
+### 5) Run the API
 
 ```bash
 make run
@@ -41,8 +47,8 @@ Open: `http://127.0.0.1:8000`
 
 ## Endpoints (provided)
 
-- `GET /api/v1/health` — API health check
-- `GET /api/v1/settings` — returns selected settings (from env-backed `Settings`)
+- `GET /api/v1/health/` — API health check
+- `GET /api/v1/settings/` — returns selected settings (from env-backed `Settings`)
 
 Responses include an `X-Request-ID` header (generated if not provided).
 
@@ -50,14 +56,21 @@ Responses include an `X-Request-ID` header (generated if not provided).
 
 ```text
 app/
-	main.py                # Flask app wiring + error handling
-	api/v1/                # Versioned routes
-		endpoints/            # Route handlers
-		services/             # Business logic/services
+	settings.py            # Django settings configuration
+	urls.py               # Main URL configuration
+	wsgi.py               # WSGI application
+	main.py               # Alternative Django runner
+	api/v1/               # Versioned routes
+		urls.py              # API v1 URL patterns
+		endpoints/           # Route handlers
+			urls.py            # Endpoint URL patterns
+			views.py           # Django views
+		services/            # Business logic/services
 	core/
 		config.py            # Pydantic settings (APP_* env vars)
 		logging.py           # JSON/text logging configuration
-		middleware.py        # Request ID + timing middleware
+		middleware.py        # Django middleware
+manage.py                # Django management commands
 tests/
 	test_health.py         # smoke tests for health endpoints
 ```
@@ -79,7 +92,7 @@ To load an environment-specific file, you must set `APP_ENVIRONMENT` in the **pr
 
 ```bash
 export APP_ENVIRONMENT=staging
-flask --app app.main run --debug --port 8000
+python manage.py runserver 0.0.0.0:8000
 ```
 
 When `APP_ENVIRONMENT` is set, the app will also try (if present):
@@ -90,7 +103,7 @@ You can also explicitly point to a file using `APP_ENV_FILE`:
 
 ```bash
 export APP_ENV_FILE=env/production.env
-gunicorn -b 0.0.0.0:8000 app.main:app
+gunicorn -b 0.0.0.0:8000 app.wsgi:application
 ```
 
 For local runs, `APP_ENV_FILE` is usually the simplest because it doesn’t require pre-setting `APP_ENVIRONMENT`.
@@ -105,7 +118,13 @@ Common options:
 ## Testing and Tooling
 
 ```bash
+# Django tests
+python manage.py test
+
+# Or use pytest
 pytest
+
+# Linting and type checking
 ruff check .
 mypy app
 ```
@@ -113,8 +132,8 @@ mypy app
 ## Docker
 
 ```bash
-docker build -t conversational-connect-flask .
-docker run --rm -p 8000:8000 conversational-connect-flask
+docker build -t conversational-connect-django .
+docker run --rm -p 8000:8000 conversational-connect-django
 ```
 
 ## What You Implement During the Interview

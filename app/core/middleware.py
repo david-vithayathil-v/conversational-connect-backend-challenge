@@ -1,20 +1,51 @@
-from __future__ import annotations
+"""
+Django middleware for request tracking and logging.
+"""
 
 import time
 import uuid
+import logging
 
-from flask import Flask, g, request
+from .logging import set_request_id
+
+logger = logging.getLogger(__name__)
 
 
-def init_request_context(app: Flask) -> None:
-    @app.before_request
-    def _before_request() -> None:
-        g.request_id = request.headers.get("X-Request-ID") or str(uuid.uuid4())
-        g._start_time = time.perf_counter()
+class RequestLoggingMiddleware:
+    """Middleware to add request ID and process time tracking."""
 
-    @app.after_request
-    def _after_request(response):
-        elapsed_ms = (time.perf_counter() - getattr(g, "_start_time", time.perf_counter())) * 1000
-        response.headers["X-Request-ID"] = getattr(g, "request_id", "-")
-        response.headers["X-Process-Time-Ms"] = f"{elapsed_ms:.2f}"
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        # Set request ID
+        request.request_id = request.headers.get("X-Request-ID") or str(uuid.uuid4())
+        
+        # Set request ID in thread-local storage for logging
+        set_request_id(request.request_id)
+        
+        # Record start time
+        start_time = time.perf_counter()
+        
+        # Process the request
+        response = self.get_response(request)
+        
+        # Calculate elapsed time
+        elapsed_ms = (time.perf_counter() - start_time) * 1000
+        
+        # Add headers to response
+        response["X-Request-ID"] = request.request_id
+        response["X-Process-Time-Ms"] = f"{elapsed_ms:.2f}"
+        
+        # Log the request
+        logger.info(
+            "Request processed",
+            extra={
+                "method": request.method,
+                "path": request.path,
+                "status_code": response.status_code,
+                "process_time_ms": elapsed_ms,
+            }
+        )
+        
         return response
