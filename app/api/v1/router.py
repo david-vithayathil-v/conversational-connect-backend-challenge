@@ -1,6 +1,6 @@
-from fastapi import APIRouter
+from flask import Blueprint
 
-from app.api.v1.endpoints.main import router as main_router
+from app.api.v1.endpoints.main import bp as main_bp
 
-api_router = APIRouter()
-api_router.include_router(main_router, tags=["health"])
+api_v1 = Blueprint("api_v1", __name__)
+api_v1.register_blueprint(main_bp)

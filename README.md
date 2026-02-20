@@ -1,12 +1,15 @@
-# Conversational Connect — FastAPI Scaffold
+# Conversational Connect — Flask Scaffold
 
-This branch (`fastapi`) provides a small, production-leaning **FastAPI** scaffold used in interviews.
+This branch (`flask`) provides a small, production-leaning **Flask** scaffold.
 
 The goal is to give you a clean starting point (app structure, configuration, logging, health endpoints, and a tiny test) so you can focus on implementing the API logic during the interview.
 
 ## Quickstart
 
+Feel free to use any other library that you are comfortable with for virtual environment and dependency manager, the below steps are just a simple guide
+
 ### 1) Create a virtual environment
+
 
 ```bash
 python -m venv .venv
@@ -31,13 +34,10 @@ Env files are provided in `env/` (safe defaults, no secrets):
 ### 4) Run the API
 
 ```bash
-uvicorn app.main:app --reload
+make run
 ```
 
-Open:
-
-- Swagger UI: `http://127.0.0.1:8000/docs`
-- OpenAPI spec: `http://127.0.0.1:8000/openapi.json`
+Open: `http://127.0.0.1:8000`
 
 ## Endpoints (provided)
 
@@ -50,7 +50,7 @@ Responses include an `X-Request-ID` header (generated if not provided).
 
 ```text
 app/
-	main.py                # FastAPI app wiring + exception handling
+	main.py                # Flask app wiring + error handling
 	api/v1/                # Versioned routes
 		endpoints/            # Route handlers
 		services/             # Business logic/services
@@ -79,7 +79,7 @@ To load an environment-specific file, you must set `APP_ENVIRONMENT` in the **pr
 
 ```bash
 export APP_ENVIRONMENT=staging
-uvicorn app.main:app --reload
+flask --app app.main run --debug --port 8000
 ```
 
 When `APP_ENVIRONMENT` is set, the app will also try (if present):
@@ -90,7 +90,7 @@ You can also explicitly point to a file using `APP_ENV_FILE`:
 
 ```bash
 export APP_ENV_FILE=env/production.env
-uvicorn app.main:app
+gunicorn -b 0.0.0.0:8000 app.main:app
 ```
 
 For local runs, `APP_ENV_FILE` is usually the simplest because it doesn’t require pre-setting `APP_ENVIRONMENT`.
@@ -113,8 +113,8 @@ mypy app
 ## Docker
 
 ```bash
-docker build -t conversational-connect-fastapi .
-docker run --rm -p 8000:8000 conversational-connect-fastapi
+docker build -t conversational-connect-flask .
+docker run --rm -p 8000:8000 conversational-connect-flask
 ```
 
 ## What You Implement During the Interview
